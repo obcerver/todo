@@ -5,8 +5,10 @@ const cors = require('cors');
 const authRouter = require("./routes/auth.route");
 const userRouter = require("./routes/user.route");
 const todoRouter = require("./routes/todo.route");
+const cookieParser = require("cookie-parser");
 
 const app = express();
+app.use(cookieParser()); 
 const PORT = process.env.PORT || 3000; // Use PORT from .env
 
 // Middleware to parse JSON

@@ -4,8 +4,6 @@ const { store, index,show } = require("../controllers/user.controller");
 
 const router = express.Router();
 
-router.post("/", store);
-
 router.get("/", index);
 
 // router.get("/chat/:id", userVerification, showChat)

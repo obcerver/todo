@@ -1,17 +1,10 @@
-const express = require('express');
-//import { store, index, show, showChat, update } from "../controller/Chat.controller.js";
-//import { userVerification } from "../Middleware/AuthMiddleware.js";
-
+const express = require("express");
 const router = express.Router();
 
-// router.post("/", store)
+const { authMiddleware } = require('../middleware/auth.middleware');
+const { index, store } = require('../controllers/todo.controller');
 
-// router.get("/", index)
-
-// router.get("/chat/:id", userVerification, showChat)
-
-// router.get("/:id", show)
-
-// router.put("/:id", update)
+router.get("/", authMiddleware, index);
+router.post("/", authMiddleware, store)
 
 module.exports = router;
