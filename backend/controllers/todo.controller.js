@@ -16,17 +16,16 @@ const index = async (req, res) => {
       const id = userInfo.id;
 
       // Insert tasks into the database
-      const [todos] = await db.query("SELECT * FROM tasks WHERE user = ? ORDER BY CreatedOn DESC", [
-        id,
-      ]);
+      const [todos] = await db.query(
+        "SELECT * FROM tasks WHERE user = ? ORDER BY priority DESC, CreatedOn DESC",
+        [id]
+      );
 
-      return res
-        .status(200)
-        .json({
-          message: "Successfully fetched to-do",
-          todos: todos,
-          user: user,
-        });
+      return res.status(200).json({
+        message: "Successfully fetched to-do",
+        todos: todos,
+        user: user,
+      });
     }
 
     return res.status(401).json({ message: "Failed to fetch your to-dos" });
@@ -37,10 +36,10 @@ const index = async (req, res) => {
 };
 
 const store = async (req, res) => {
-  const { description } = req.body;
+  const { description, priority } = req.body;
   const user = req.user;
 
-  if (!description) {
+  if (!description || !priority) {
     return res.status(400).json({
       success: false,
       message: "Please provide all credentials",
@@ -58,8 +57,8 @@ const store = async (req, res) => {
 
       // Insert task into the database
       const [result] = await db.query(
-        "INSERT INTO tasks (description, user) VALUES (?, ?)",
-        [description, id]
+        "INSERT INTO tasks (description, priority, user) VALUES (?, ?, ?)",
+        [description, priority, id]
       );
 
       // Fetch the newly inserted task to include all fields (e.g., date)
@@ -118,4 +117,46 @@ const update = async (req, res) => {
   }
 };
 
-module.exports = { index, store, update };
+const destroy = async (req, res) => {
+  const { id } = req.params;
+  const user = req.user;
+  let userId;
+  let todoUserId;
+
+  const [users] = await db.query("SELECT * FROM users WHERE email = ?", [
+    user.email,
+  ]);
+
+  if (users.length === 1) {
+    const userInfo = users[0];
+    userId = userInfo.id;
+  }
+
+  const [todos] = await db.query("SELECT * FROM tasks WHERE id = ?", [id]);
+
+  if (todos.length === 1) {
+    const todoUser = todos[0];
+    todoUserId = todoUser.user;
+  }
+
+  if (userId === todoUserId) {
+    try {
+      await db.query("DELETE FROM tasks WHERE id = ?", [id]);
+
+      return res.status(200).json({
+        message: "Successfully deleted to-do",
+      });
+    } catch (error) {
+      console.error("Error deleting to-do:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  }
+
+  return res.status(400).json({
+    message: "Unauthorized",
+  });
+};
+
+module.exports = { index, store, update, destroy };

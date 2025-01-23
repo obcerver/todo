@@ -10,7 +10,8 @@ function Home() {
     const [user, setUser] = useState('');
     const [todos, setTodos] = useState([]);
     const [formData, setFormData] = useState({
-        description: ""
+        description: "",
+        priority: ""
     });
     const [editingTodoId, setEditingTodoId] = useState(null);
     const [editValue, setEditValue] = useState("");
@@ -29,6 +30,8 @@ function Home() {
             });
             setTodos(response.data.todos);
             setUser(response.data.user);
+
+
         } catch (error) {
             navigate('/');
         }
@@ -76,6 +79,8 @@ function Home() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log(formData);
+
 
         try {
             await axios.post("http://localhost:3000/api/todos",
@@ -84,7 +89,8 @@ function Home() {
             );
 
             setFormData({
-                description: ''
+                description: '',
+                priority: ''
             });
 
             const update = await axios.get("http://localhost:3000/api/todos", {
@@ -94,6 +100,19 @@ function Home() {
             setUser(update.data.user);
         } catch (error) {
             console.error("Failed to add todo", error);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            // Update the description on the server
+            await axios.delete(`http://localhost:3000/api/todos/${id}`,{ 
+             withCredentials: true })
+            
+            const updateTodos = todos.filter(todo => todo.id !== id);
+            setTodos(updateTodos);
+        } catch (error) {
+            console.error("Failed to delete todo", error);
         }
     };
 
@@ -107,6 +126,26 @@ function Home() {
         if (day.length < 2) day = '0' + day;
 
         return [year, month, day].join('-');
+    };
+
+    const dispPrio = (prio) => {
+        if (prio === 3) {
+            return "High";
+        } else if (prio === 2) {
+            return "Medium";
+        } else if (prio === 1) {
+            return "Low";
+        } else return "Unknown";
+    };
+
+    const dispPrioStyle = (prio) => {
+        if (prio === 1) {
+            return "bg-green-900 border border-green-500 text-green-500 bg-opacity-50";
+        } else if (prio === 2) {
+            return "bg-yellow-800 border border-yellow-500 text-yellow-500 bg-opacity-50";
+        } else if (prio === 3) {
+            return "bg-red-900 border border-red-400 text-red-400 bg-opacity-50";
+        } else return "bg-gray-700 border border-gray-200 text-gray-200 bg-opacity-50";
     };
 
     const logout = () => {
@@ -152,7 +191,66 @@ function Home() {
                                                             onChange={handleChange}
                                                         ></textarea>
                                                     </div>
-                                                    <div className="flex items-center justify-end p-3 border-t dark:border-gray-600">
+                                                    <div className="flex items-center justify-between p-3 border-t dark:border-gray-600">
+
+                                                        <div className='flex items-center gap-2'>
+                                                            <p className='text-sm'>Priority: </p>
+
+                                                            <ul className="flex w-full gap-2">
+                                                                <li>
+                                                                    <input
+                                                                        type="radio"
+                                                                        id="low"
+                                                                        name="priority"
+                                                                        value="1"
+                                                                        className="hidden peer"
+                                                                        required
+                                                                        checked={formData.priority === "1"} // Matches the value
+                                                                        onChange={handleChange} // Updates formData
+                                                                    />
+                                                                    <label htmlFor="low" className="p-2 inline-flex items-center justify-between w-full text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 dark:peer-checked:hover:text-blue-100 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-blue-700">
+                                                                        <div className="block">
+                                                                            <div className="w-full text-sm font-semibold">Low</div>
+                                                                        </div>
+                                                                    </label>
+                                                                </li>
+                                                                <li>
+                                                                    <input
+                                                                        type="radio"
+                                                                        id="medium"
+                                                                        name="priority"
+                                                                        value="2"
+                                                                        className="hidden peer"
+                                                                        required
+                                                                        checked={formData.priority === "2"} // Matches the value
+                                                                        onChange={handleChange} // Updates formData
+                                                                    />
+                                                                    <label htmlFor="medium" className="p-2 inline-flex items-center justify-between w-full text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 dark:peer-checked:hover:text-blue-100 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-blue-700">
+                                                                        <div className="block">
+                                                                            <div className="w-full text-sm font-semibold">Medium</div>
+                                                                        </div>
+                                                                    </label>
+                                                                </li>
+                                                                <li>
+                                                                    <input
+                                                                        type="radio"
+                                                                        id="high"
+                                                                        name="priority"
+                                                                        value="3"
+                                                                        className="hidden peer"
+                                                                        required
+                                                                        checked={formData.priority === "3"} // Matches the value
+                                                                        onChange={handleChange} // Updates formData
+                                                                    />
+                                                                    <label htmlFor="high" className="p-2 inline-flex items-center justify-between w-full text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 dark:peer-checked:hover:text-blue-100 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-blue-700">
+                                                                        <div className="block">
+                                                                            <div className="w-full text-sm font-semibold">High</div>
+                                                                        </div>
+                                                                    </label>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+
                                                         <button
                                                             type="submit"
                                                             className="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-gray-800 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800"
@@ -168,7 +266,7 @@ function Home() {
                                             {todos.length > 0 ? (
                                                 todos.map((todo) => (
                                                     <div className="relative py-6 group" key={todo.id}>
-                                                        <div className="flex flex-col sm:flex-row items-start mb-1 group-last:before:hidden before:absolute before:h-full before:px-px before:bg-slate-300 before:self-start before:-translate-x-1/2 before:translate-y-3 after:absolute after:w-2 after:h-2 after:bg-indigo-600 after:border-4 after:box-content after:border-slate-50 after:rounded-full after:-translate-x-1/2 after:translate-y-1.5">
+                                                        <div className="flex flex-col sm:flex-row items-start mb-1 group-last:before:hidden before:absolute before:h-full before:px-px before:bg-slate-300 before:self-start before:-translate-x-1/2 before:translate-y-3 after:absolute after:w-2 after:h-2 after:bg-gray-800 after:border-4 after:box-content after:border-slate-50 after:rounded-full after:-translate-x-1/2 after:translate-y-1.5">
                                                             {editingTodoId === todo.id ? (
                                                                 <textarea
                                                                     rows="4"
@@ -180,17 +278,21 @@ function Home() {
                                                                     autoFocus
                                                                 ></textarea>
                                                             ) : (
-                                                                <div 
-                                                                    className="text-md text-slate-200 text-left pl-4"
+                                                                <div
+                                                                    className="text-md text-slate-200 text-justify mx-4"
                                                                     onDoubleClick={() => handleDoubleClick(todo)}
                                                                 >
-                                                                    {todo.description}
+                                                                    {todo.description} <span className='italic text-blue-100 text-xs'>(Created on: {formatDate(todo.CreatedOn)})</span>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                        <div className="text-slate-400 text-left pl-4">
-                                                            Posted on: {formatDate(todo.CreatedOn)}
+                                                        <div className='flex gap-2'>
+                                                            <div className={`text-slate-400 text-left text-sm px-2 ml-4 bg-gray-200 p-1 rounded-xl w-max ${(dispPrioStyle(todo.priority))}`}>
+                                                                Priority: {dispPrio(todo.priority)}
+                                                            </div>
+                                                            <button className='p-2 text-xs rounded-xl' onClick={() => handleDelete(todo.id)}>Done It</button>
                                                         </div>
+
                                                     </div>
                                                 ))
                                             ) : (
