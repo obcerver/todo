@@ -1,43 +1,47 @@
 const express = require('express');
-const db = require('./db');
+const http = require('http');
+const { Server } = require('socket.io');
+const cookieParser = require("cookie-parser");
 const cors = require('cors');
 
 const authRouter = require("./routes/auth.route");
 const userRouter = require("./routes/user.route");
 const todoRouter = require("./routes/todo.route");
-const cookieParser = require("cookie-parser");
 
 const app = express();
-app.use(cookieParser()); 
-const PORT = process.env.PORT || 3000; // Use PORT from .env
-
-// Middleware to parse JSON
-app.use(express.json());
-
-const corsOptions = {
-    origin: 'http://localhost:5173',  // Frontend URL
-    methods: ['GET', 'POST', 'PUT' ,'PATCH', 'DELETE'],
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
-};
-
-app.use(cors(corsOptions));
-
-app.use("/api/auth", authRouter)
-app.use("/api/users", userRouter)
-app.use("/api/todos", todoRouter)
-
-//Test Route to Fetch Data
-app.get('/users', async (req, res) => {
-  try {
-    const [rows] = await db.query('SELECT * FROM users'); // Example query
-    res.json(rows);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ error: 'Database error' });
-  }
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:5173', // Frontend URL
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true,
+    },
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+const PORT = process.env.PORT || 3000;
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+}));
+
+// Attach io to app
+app.set('io', io);
+
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+app.use("/api/todos", todoRouter);
+
+io.on('connection', (socket) => {
+    console.log(`User connected: ${socket.id}`);
+
+    socket.on('disconnect', () => {
+        console.log(`User disconnected: ${socket.id}`);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });
